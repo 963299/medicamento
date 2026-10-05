@@ -506,10 +506,29 @@ if(!usandoCapacitor && 'Notification' in window && Notification.permission === '
   }, {once:true});
 }
 if(usandoCapacitor){
-  // pede permissão de alarme/notificação nativa (AlarmManager) na primeira abertura
-  Capacitor.Plugins.LocalNotifications.checkPermissions().then((res) => {
-    if(res.display !== 'granted') Capacitor.Plugins.LocalNotifications.requestPermissions();
-  }).catch(()=>{});
+  // app nativo: permissão de notificação, canal com som/vibração e alarme exato (Android 12+)
+  (async () => {
+    const LN = Capacitor.Plugins.LocalNotifications;
+    try{
+      const p = await LN.checkPermissions();
+      if(p.display !== 'granted') await LN.requestPermissions();
+    }catch(e){}
+    try{
+      await LN.createChannel({
+        id: 'doses',
+        name: 'Horário dos medicamentos',
+        description: 'Aviso na hora de tomar o remédio',
+        importance: 5,
+        visibility: 1,
+        vibration: true,
+        lights: true
+      });
+    }catch(e){}
+    try{
+      const ex = await LN.checkExactNotificationSetting();
+      if(ex.exact_alarm !== 'granted') await LN.changeExactNotificationSetting();
+    }catch(e){}
+  })();
 }
 
 function idNumerico(medId){
@@ -531,7 +550,8 @@ function scheduleAlarm(med){
         id: nid,
         title: 'Hora do medicamento',
         body: `${med.nome} — ${formaLabel(med)}`,
-        schedule: { at: new Date(med.proximaDose) },
+        schedule: { at: new Date(med.proximaDose), allowWhileIdle: true },
+        channelId: 'doses',
         smallIcon: 'ic_stat_icon'
       }]
     }).catch(()=>{});
@@ -948,7 +968,7 @@ document.getElementById('f_foto').addEventListener('change', (e) => {
 });
 
 /* ============ Service worker ============ */
-if('serviceWorker' in navigator){
+if('serviceWorker' in navigator && !usandoCapacitor){
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   });

@@ -1,0 +1,15 @@
+{
+  "appId": "com.reizinho.medicamento",
+  "appName": "MEDICAMENTO",
+  "webDir": "www",
+  "backgroundColor": "#0A0E16",
+  "android": {
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_icon",
+      "iconColor": "#3FD8E8"
+    }
+  }
+}
